@@ -8,7 +8,7 @@
 //                     Kratos default license: kratos/license.txt
 //
 //  Main authors:    Riccardo Rossi
-//  Collaborators:   Vicente Mataix
+//  Collaborators:   Vicente Mataix, Alejandro Cornejo
 //
 //
 #if !defined(KRATOS_RESIDUAL_BASED_BLOCK_BUILDER_AND_SOLVER )
@@ -196,8 +196,7 @@ public:
         #pragma omp parallel firstprivate(nelements,nconditions, LHS_Contribution, RHS_Contribution, EquationId )
         {
             # pragma omp for  schedule(guided, 512) nowait
-            for (int k = 0; k < nelements; k++)
-            {
+            for (int k = 0; k < nelements; k++) {
                 ModelPart::ElementsContainerType::iterator it = el_begin + k;
 
                 //detect if the element is active or not. If the user did not make any choice the element
@@ -206,8 +205,7 @@ public:
                 if ((it)->IsDefined(ACTIVE))
                     element_is_active = (it)->Is(ACTIVE);
 
-                if (element_is_active)
-                {
+                if (element_is_active) {
                     //calculate elemental contribution
                     pScheme->CalculateSystemContributions(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
 
@@ -221,8 +219,7 @@ public:
             }
 
             #pragma omp for  schedule(guided, 512)
-            for (int k = 0; k < nconditions; k++)
-            {
+            for (int k = 0; k < nconditions; k++) {
                 ModelPart::ConditionsContainerType::iterator it = cond_begin + k;
 
                 //detect if the element is active or not. If the user did not make any choice the element
@@ -231,8 +228,7 @@ public:
                 if ((it)->IsDefined(ACTIVE))
                     condition_is_active = (it)->Is(ACTIVE);
 
-                if (condition_is_active)
-                {
+                if (condition_is_active) {
                     //calculate elemental contribution
                     pScheme->Condition_CalculateSystemContributions(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
 
@@ -315,16 +311,13 @@ public:
         else
             norm_b = 0.00;
 
-        if (norm_b != 0.00)
-        {
+        if (norm_b != 0.00) {
             //do solve
             BaseType::mpLinearSystemSolver->Solve(A, Dx, b);
-        }
-        else
+        } else
             TSparseSpace::SetToZero(Dx);
 
-        if(mT.size1() != 0) //if there are master-slave constraints
-        {
+        if (mT.size1() != 0) { //if there are master-slave constraints
             //recover solution of the original problem
             TSystemVectorType Dxmodified = Dx;
 
@@ -344,7 +337,7 @@ public:
         ModelPart& rModelPart
     )
     {
-        if(rModelPart.MasterSlaveConstraints().size() != 0) {
+        if (rModelPart.MasterSlaveConstraints().size() != 0) {
             TSystemVectorType Dxmodified(b.size());
 
             InternalSystemSolveWithPhysics(A, Dxmodified, b, rModelPart);
@@ -487,8 +480,7 @@ public:
 
         //NOTE: dofs are assumed to be numbered consecutively in the BlockBuilderAndSolver
         #pragma omp parallel for firstprivate(ndofs)
-        for (int k = 0; k<ndofs; k++)
-        {
+        for (int k = 0; k<ndofs; k++) {
             typename DofsArrayType::iterator dof_iterator = BaseType::mDofSet.begin() + k;
             const std::size_t i = dof_iterator->EquationId();
 
@@ -523,11 +515,8 @@ public:
         DofsVectorType dof_list, second_dof_list; // NOTE: The second dof list is only used on constraints to include master/slave relations
 
         unsigned int nthreads = OpenMPUtils::GetNumThreads();
-
         typedef std::unordered_set < NodeType::DofType::Pointer, DofPointerHasher>  set_type;
-
         KRATOS_INFO_IF("ResidualBasedBlockBuilderAndSolver", ( this->GetEchoLevel() > 2)) << "Number of threads" << nthreads << "\n" << std::endl;
-
         KRATOS_INFO_IF("ResidualBasedBlockBuilderAndSolver", ( this->GetEchoLevel() > 2)) << "Initializing element loop" << std::endl;
 
         /**
@@ -594,8 +583,7 @@ public:
         BaseType::mDofSet = DofsArrayType();
 
         Doftemp.reserve(dof_global_set.size());
-        for (auto it= dof_global_set.begin(); it!= dof_global_set.end(); it++)
-        {
+        for (auto it= dof_global_set.begin(); it!= dof_global_set.end(); it++) {
             Doftemp.push_back( it->get() );
         }
         Doftemp.Sort();
@@ -604,13 +592,9 @@ public:
 
         //Throws an exception if there are no Degrees Of Freedom involved in the analysis
         KRATOS_ERROR_IF(BaseType::mDofSet.size() == 0) << "No degrees of freedom!" << std::endl;
-
         KRATOS_INFO_IF("ResidualBasedBlockBuilderAndSolver", ( this->GetEchoLevel() > 2)) << "Number of degrees of freedom:" << BaseType::mDofSet.size() << std::endl;
-
         BaseType::mDofSetIsInitialized = true;
-
         KRATOS_INFO_IF("ResidualBasedBlockBuilderAndSolver", ( this->GetEchoLevel() > 2 && rModelPart.GetCommunicator().MyPID() == 0)) << "Finished setting up the dofs" << std::endl;
-
         KRATOS_INFO_IF("ResidualBasedBlockBuilderAndSolver", ( this->GetEchoLevel() > 2)) << "End of setup dof set\n" << std::endl;
 
 
@@ -645,7 +629,6 @@ public:
         for (int i = 0; i < static_cast<int>(ndofs); i++) {
             typename DofsArrayType::iterator dof_iterator = BaseType::mDofSet.begin() + i;
             dof_iterator->SetEquationId(i);
-
         }
     }
 
@@ -661,18 +644,15 @@ public:
     ) override
     {
         KRATOS_TRY
-        if (pA == NULL) //if the pointer is not initialized initialize it to an empty matrix
-        {
+        if (pA == NULL) { //if the pointer is not initialized initialize it to an empty matrix
             TSystemMatrixPointerType pNewA = TSystemMatrixPointerType(new TSystemMatrixType(0, 0));
             pA.swap(pNewA);
         }
-        if (pDx == NULL) //if the pointer is not initialized initialize it to an empty matrix
-        {
+        if (pDx == NULL) { //if the pointer is not initialized initialize it to an empty matrix
             TSystemVectorPointerType pNewDx = TSystemVectorPointerType(new TSystemVectorType(0));
             pDx.swap(pNewDx);
         }
-        if (pb == NULL) //if the pointer is not initialized initialize it to an empty matrix
-        {
+        if (pb == NULL) { //if the pointer is not initialized initialize it to an empty matrix
             TSystemVectorPointerType pNewb = TSystemVectorPointerType(new TSystemVectorType(0));
             pb.swap(pNewb);
         }
@@ -682,15 +662,11 @@ public:
         TSystemVectorType& b = *pb;
 
         //resizing the system vectors and matrix
-        if (A.size1() == 0 || BaseType::GetReshapeMatrixFlag() == true) //if the matrix is not initialized
-        {
+        if (A.size1() == 0 || BaseType::GetReshapeMatrixFlag() == true) { //if the matrix is not initialized
             A.resize(BaseType::mEquationSystemSize, BaseType::mEquationSystemSize, false);
             ConstructMatrixStructure(pScheme, A, rModelPart);
-        }
-        else
-        {
-            if (A.size1() != BaseType::mEquationSystemSize || A.size2() != BaseType::mEquationSystemSize)
-            {
+        } else {
+            if (A.size1() != BaseType::mEquationSystemSize || A.size2() != BaseType::mEquationSystemSize) {
                 KRATOS_ERROR <<"The equation system size has changed during the simulation. This is not permited."<<std::endl;
                 A.resize(BaseType::mEquationSystemSize, BaseType::mEquationSystemSize, true);
                 ConstructMatrixStructure(pScheme, A, rModelPart);
@@ -825,34 +801,29 @@ public:
 
         //detect if there is a line of all zeros and set the diagonal to a 1 if this happens
         #pragma omp parallel for firstprivate(system_size)
-        for (int k = 0; k < static_cast<int>(system_size); ++k){
+        for (int k = 0; k < static_cast<int>(system_size); ++k) {
             std::size_t col_begin = Arow_indices[k];
             std::size_t col_end = Arow_indices[k+1];
             bool empty = true;
-            for (std::size_t j = col_begin; j < col_end; ++j)
-            {
-                if(Avalues[j] != 0.0)
-                {
+            for (std::size_t j = col_begin; j < col_end; ++j) {
+                if(Avalues[j] != 0.0) {
                     empty = false;
                     break;
                 }
             }
 
-            if(empty == true)
-            {
+            if(empty == true) {
                 A(k,k) = 1.0;
                 b[k] = 0.0;
             }
         }
 
         #pragma omp parallel for
-        for (int k = 0; k < static_cast<int>(system_size); ++k)
-        {
+        for (int k = 0; k < static_cast<int>(system_size); ++k) {
             std::size_t col_begin = Arow_indices[k];
             std::size_t col_end = Arow_indices[k+1];
             double k_factor = scaling_factors[k];
-            if (k_factor == 0)
-            {
+            if (k_factor == 0) {
                 // zero out the whole row, except the diagonal
                 for (std::size_t j = col_begin; j < col_end; ++j)
                     if (static_cast<int>(Acol_indices[j]) != k )
@@ -860,9 +831,7 @@ public:
 
                 // zero out the RHS
                 b[k] = 0.0;
-            }
-            else
-            {
+            } else {
                 // zero out the column which is associated with the zero'ed row
                 for (std::size_t j = col_begin; j < col_end; ++j)
                     if(scaling_factors[ Acol_indices[j] ] == 0 )
