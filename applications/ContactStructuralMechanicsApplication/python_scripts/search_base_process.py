@@ -510,6 +510,7 @@ class SearchBaseProcess(KM.Process):
             return False
 
     def _compute_number_nodes(self):
+        number_nodes = 0
         # We compute the number of nodes of the geometry
         if self.predefined_master_slave and self.dimension == 3:
             slave_defined = False
